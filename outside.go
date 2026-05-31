@@ -348,7 +348,7 @@ func parseV6(data []byte, incoming bool, fp *firewall.Packet) error {
 		proto := layers.IPProtocol(data[protoAt])
 
 		switch proto {
-		case layers.IPProtocolESP, layers.IPProtocolNoNextHeader:
+		case layers.IPProtocolESP, layers.IPProtocolOSPF, layers.IPProtocolNoNextHeader:
 			fp.Protocol = uint8(proto)
 			fp.RemotePort = 0
 			fp.LocalPort = 0
@@ -463,6 +463,8 @@ func parseV4(data []byte, incoming bool, fp *firewall.Packet) error {
 	if !fp.Fragment {
 		if fp.Protocol == firewall.ProtoICMP {
 			minLen += minFwPacketLen + 2
+		} else if fp.Protocol == firewall.ProtoOSPF {
+			// OSPF has no ports, and firewall matching only needs IP addresses plus protocol.
 		} else {
 			minLen += minFwPacketLen
 		}
@@ -486,6 +488,9 @@ func parseV4(data []byte, incoming bool, fp *firewall.Packet) error {
 	} else if fp.Protocol == firewall.ProtoICMP { //note that orientation doesn't matter on ICMP
 		fp.RemotePort = binary.BigEndian.Uint16(data[ihl+4 : ihl+6]) //identifier
 		fp.LocalPort = 0                                             //code would be uint16(data[ihl+1])
+	} else if fp.Protocol == firewall.ProtoOSPF {
+		fp.RemotePort = 0
+		fp.LocalPort = 0
 	} else if incoming {
 		fp.RemotePort = binary.BigEndian.Uint16(data[ihl : ihl+2])  //src port
 		fp.LocalPort = binary.BigEndian.Uint16(data[ihl+2 : ihl+4]) //dst port

@@ -201,6 +201,18 @@ func Test_newPacket_v6(t *testing.T) {
 	assert.Equal(t, uint16(0), p.LocalPort)
 	assert.False(t, p.Fragment)
 
+	// A good OSPF packet
+	b = buffer.Bytes()
+	b[6] = byte(layers.IPProtocolOSPF)
+	err = newPacket(b, true, p)
+	require.NoError(t, err)
+	assert.Equal(t, uint8(layers.IPProtocolOSPF), p.Protocol)
+	assert.Equal(t, netip.MustParseAddr("ff02::2"), p.RemoteAddr)
+	assert.Equal(t, netip.MustParseAddr("ff02::1"), p.LocalAddr)
+	assert.Equal(t, uint16(0), p.RemotePort)
+	assert.Equal(t, uint16(0), p.LocalPort)
+	assert.False(t, p.Fragment)
+
 	// A good None packet
 	b = buffer.Bytes()
 	b[6] = byte(layers.IPProtocolNoNextHeader)
